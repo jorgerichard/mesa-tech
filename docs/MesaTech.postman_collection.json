@@ -1,0 +1,61 @@
+{
+  "info": {
+    "name": "MesaTech Cloud",
+    "description": "Pruebas del BFF. Configure apiUrl y accessToken en la colección.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "apiUrl", "value": "http://localhost:8080" },
+    { "key": "accessToken", "value": "" },
+    { "key": "solicitudId", "value": "1" }
+  ],
+  "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+  "item": [
+    {
+      "name": "Sesión autenticada",
+      "request": { "method": "GET", "url": "{{apiUrl}}/api/v1/session" }
+    },
+    {
+      "name": "Crear solicitud",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"Equipo no inicia\",\n  \"descripcion\": \"Pantalla negra al encender\",\n  \"categoria\": \"SOPORTE_HARDWARE\",\n  \"prioridad\": \"ALTA\"\n}" },
+        "url": "{{apiUrl}}/api/v1/solicitudes"
+      }
+    },
+    {
+      "name": "Mis solicitudes",
+      "request": { "method": "GET", "url": "{{apiUrl}}/api/v1/solicitudes/mias" }
+    },
+    {
+      "name": "Todas las solicitudes - Operador/Admin",
+      "request": { "method": "GET", "url": "{{apiUrl}}/api/v1/solicitudes" }
+    },
+    {
+      "name": "Detalle v1",
+      "request": { "method": "GET", "url": "{{apiUrl}}/api/v1/solicitudes/{{solicitudId}}" }
+    },
+    {
+      "name": "Detalle v2 con historial",
+      "request": { "method": "GET", "url": "{{apiUrl}}/api/v2/solicitudes/{{solicitudId}}" }
+    },
+    {
+      "name": "Asignar solicitud - Operador/Admin",
+      "request": { "method": "PATCH", "url": "{{apiUrl}}/api/v1/solicitudes/{{solicitudId}}/asignacion" }
+    },
+    {
+      "name": "Cambiar estado - Operador/Admin",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"estado\": \"EN_PROCESO\",\n  \"comentario\": \"Diagnóstico iniciado\"\n}" },
+        "url": "{{apiUrl}}/api/v1/solicitudes/{{solicitudId}}/estado"
+      }
+    },
+    {
+      "name": "Consultar catálogo",
+      "request": { "method": "GET", "url": "{{apiUrl}}/api/v1/catalogo" }
+    }
+  ]
+}

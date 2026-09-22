@@ -1,0 +1,23 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: mesatech-bff
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.microsoftonline.com/${ENTRA_TENANT_ID:055a632e-e72b-4c47-8721-0622709b654f}/v2.0
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+app:
+  security:
+    audience: ${ENTRA_BACKEND_AUDIENCE:d76c42fd-0fa1-4c27-8e13-3bee84d0d3f3}
+  cors:
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+  services:
+    solicitudes-url: ${SOLICITUDES_SERVICE_URL:http://localhost:8081}
+    catalogo-url: ${CATALOGO_SERVICE_URL:http://localhost:8082}

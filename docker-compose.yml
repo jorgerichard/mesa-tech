@@ -1,0 +1,68 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./infra/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  solicitudes-service:
+    build: ./solicitudes-service
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/mesatech_solicitudes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  catalogo-service:
+    build: ./catalogo-service
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/mesatech_catalogo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+
+  bff:
+    build: ./bff
+    environment:
+      ENTRA_TENANT_ID: ${ENTRA_TENANT_ID}
+      ENTRA_BACKEND_AUDIENCE: ${ENTRA_BACKEND_AUDIENCE}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      SOLICITUDES_SERVICE_URL: http://solicitudes-service:8081
+      CATALOGO_SERVICE_URL: http://catalogo-service:8082
+    depends_on:
+      - solicitudes-service
+      - catalogo-service
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL}
+    depends_on:
+      - bff
+    ports:
+      - "3000:80"
+
+volumes:
+  mysql-data:
