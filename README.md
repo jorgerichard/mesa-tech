@@ -1,18 +1,32 @@
 # MesaTech Cloud
 
-MVP de gestión de solicitudes de soporte construido según las directrices de la EP1 DSY1107.
+MVP de gestión de solicitudes de soporte con autenticación Microsoft Entra ID, BFF, microservicios, RDS y mensajería RabbitMQ.
 
 ## Arquitectura
 
-`React + MSAL -> AWS API Gateway -> BFF Spring Boot -> solicitudes-service / catalogo-service -> MySQL`
+`React + MSAL -> AWS API Gateway -> BFF Spring Boot -> catalogo-service (productor) -> RabbitMQ -> solicitudes-service (consumidor) -> RDS`
 
 - El frontend nunca consume directamente los microservicios.
 - API Gateway y el BFF validan el Access Token de Microsoft Entra ID.
-- El BFF aplica autorización y no accede a la base de datos.
-- Los microservicios implementan reglas de negocio y persistencia.
-- `/api/v1/solicitudes/{id}` y `/api/v2/solicitudes/{id}` coexisten. V2 agrega historial y datos extendidos.
+- El BFF aplica autorización y no accede a las bases de datos.
+- La creación de solicitudes es asíncrona mediante RabbitMQ.
+- Las consultas y cambios de estado permanecen síncronos entre BFF y solicitudes-service.
+- Catálogo y Solicitudes usan bases de datos RDS independientes.
+- Los mensajes usan un exchange `direct` durable, cola durable y routing key explícita.
+- El consumidor es idempotente mediante `eventId`.
 
-## Puertos locales
+## RabbitMQ
+
+| Elemento | Valor |
+| --- | --- |
+| Exchange | `mesatech.exchange` |
+| Tipo | `direct` |
+| Cola | `solicitudes.queue` |
+| Routing key | `solicitud.creada` |
+| Puerto AMQP | `5672` |
+| Panel de administración | `15672` |
+
+## Puertos
 
 | Componente | Puerto |
 | --- | ---: |
@@ -20,6 +34,8 @@ MVP de gestión de solicitudes de soporte construido según las directrices de l
 | BFF | 8080 |
 | solicitudes-service | 8081 |
 | catalogo-service | 8082 |
+| RabbitMQ AMQP | 5672 |
+| RabbitMQ Management | 15672 |
 | MySQL | 3306 |
 
 ## Microsoft Entra ID
@@ -36,12 +52,19 @@ No se almacenan secretos de Entra ID porque el frontend SPA usa Authorization Co
 1. Copiar `.env.example` como `.env`.
 2. Ejecutar `docker compose up --build`.
 3. Abrir `http://localhost:3000`.
+4. Abrir RabbitMQ en `http://localhost:15672`.
 
-Para desarrollo sin Docker, cada backend se ejecuta con `mvn spring-boot:run` desde su carpeta y React con `npm install && npm start`.
+## Despliegue AWS
+
+- EC2 Catálogo/BFF: ejecuta `catalogo-service` y `bff`.
+- EC2 Solicitudes: ejecuta `solicitudes-service`.
+- EC2 RabbitMQ: ejecuta RabbitMQ 4.2 Management.
+- RDS Catálogo y RDS Solicitudes permanecen privadas.
+- Todos los secretos se entregan mediante variables de entorno.
 
 ## Roles
 
-Los App Roles esperados en el claim `roles` son `CLIENTE`, `OPERADOR` y `ADMINISTRADOR`. El scope `access_as_user` autoriza el acceso general; los roles determinan las operaciones de negocio.
+Los App Roles esperados en el claim `roles` son `CLIENTE`, `OPERADOR` y `ADMINISTRADOR`.
 
 ## Documentación
 

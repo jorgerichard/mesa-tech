@@ -11,6 +11,8 @@ import jakarta.persistence.*;
 public class Solicitud {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true, updatable = false, length = 36)
+    private String eventId;
     @Column(nullable = false, length = 120)
     private String titulo;
     @Column(nullable = false, length = 2000)
@@ -46,6 +48,8 @@ public class Solicitud {
     }
 
     public Long getId() { return id; }
+    public String getEventId() { return eventId; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
     public String getDescripcion() { return descripcion; }

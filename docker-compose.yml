@@ -16,14 +16,39 @@ services:
       timeout: 5s
       retries: 20
 
+  rabbitmq:
+    image: rabbitmq:4.2-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   solicitudes-service:
     build: ./solicitudes-service
     environment:
       DB_URL: jdbc:mysql://mysql:3306/mesatech_solicitudes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+      RABBITMQ_ROUTING_KEY: ${RABBITMQ_ROUTING_KEY}
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     ports:
       - "8081:8081"
@@ -34,8 +59,17 @@ services:
       DB_URL: jdbc:mysql://mysql:3306/mesatech_catalogo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+      RABBITMQ_ROUTING_KEY: ${RABBITMQ_ROUTING_KEY}
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     ports:
       - "8082:8082"
@@ -66,3 +100,4 @@ services:
 
 volumes:
   mysql-data:
+  rabbitmq-data:

@@ -14,3 +14,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:mesatech}
+    password: ${RABBITMQ_PASSWORD:mesatech123}
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 10
+app:
+  rabbitmq:
+    exchange: ${RABBITMQ_EXCHANGE:mesatech.exchange}
+    queue: ${RABBITMQ_QUEUE:solicitudes.queue}
+    routing-key: ${RABBITMQ_ROUTING_KEY:solicitud.creada}
