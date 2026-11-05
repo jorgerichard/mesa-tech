@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import cl.duoc.mesatech.solicitudes.dto.*;
-import cl.duoc.mesatech.solicitudes.messaging.SolicitudCreadaEvent;
 import cl.duoc.mesatech.solicitudes.model.*;
 import cl.duoc.mesatech.solicitudes.repository.SolicitudRepository;
 
@@ -31,14 +30,6 @@ public class SolicitudService {
     @Transactional
     public Solicitud crear(CrearSolicitudRequest request, String userId, String userName) {
         return guardar(request, userId, userName, null);
-    }
-
-    @Transactional
-    public void crearDesdeEvento(SolicitudCreadaEvent event) {
-        if (repository.existsByEventId(event.eventId())) return;
-        CrearSolicitudRequest request = new CrearSolicitudRequest(
-                event.titulo(), event.descripcion(), event.categoria(), event.prioridad());
-        guardar(request, event.solicitanteId(), event.solicitanteNombre(), event.eventId());
     }
 
     private Solicitud guardar(CrearSolicitudRequest request, String userId, String userName, String eventId) {

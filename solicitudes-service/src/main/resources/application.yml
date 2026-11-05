@@ -17,14 +17,14 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:mesatech}
-    password: ${RABBITMQ_PASSWORD:mesatech123}
+    virtual-host: ${RABBITMQ_VHOST:mesatech}
+    username: ${RABBITMQ_USER:solicitudes_consumidor}
+    password: ${RABBITMQ_PASSWORD}
     listener:
       simple:
         acknowledge-mode: auto
         prefetch: 10
+        default-requeue-rejected: true
 app:
   rabbitmq:
-    exchange: ${RABBITMQ_EXCHANGE:mesatech.exchange}
-    queue: ${RABBITMQ_QUEUE:solicitudes.queue}
-    routing-key: ${RABBITMQ_ROUTING_KEY:solicitud.creada}
+    queue: ${RABBITMQ_QUEUE:solicitudes.catalogo.queue}

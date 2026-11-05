@@ -9,7 +9,7 @@ MVP de gestión de solicitudes de soporte con autenticación Microsoft Entra ID,
 - El frontend nunca consume directamente los microservicios.
 - API Gateway y el BFF validan el Access Token de Microsoft Entra ID.
 - El BFF aplica autorización y no accede a las bases de datos.
-- La creación de solicitudes es asíncrona mediante RabbitMQ.
+- La sincronización de categorías hacia solicitudes-service es asíncrona mediante RabbitMQ.
 - Las consultas y cambios de estado permanecen síncronos entre BFF y solicitudes-service.
 - Catálogo y Solicitudes usan bases de datos RDS independientes.
 - Los mensajes usan un exchange `direct` durable, cola durable y routing key explícita.
@@ -33,15 +33,17 @@ MVP de gestión de solicitudes de soporte con autenticación Microsoft Entra ID,
 El servicio no declara el exchange, la cola ni el binding; deben existir previamente y el usuario
 productor solo necesita permiso para publicar en `catalogo.exchange`.
 
-El flujo existente de `SolicitudCreadaEvent` continúa en el código, pero queda desactivado por
-defecto. Para habilitarlo, configurar `SOLICITUD_RABBITMQ_ENABLED=true` y una conexión propia:
-`SOLICITUD_RABBITMQ_HOST`, `SOLICITUD_RABBITMQ_PORT`, `SOLICITUD_RABBITMQ_USER`,
-`SOLICITUD_RABBITMQ_PASSWORD`, `SOLICITUD_RABBITMQ_VHOST`, `SOLICITUD_RABBITMQ_EXCHANGE` y
-`SOLICITUD_RABBITMQ_ROUTING_KEY`. No reutiliza la conexión de `catalogo_publicador`. El usuario
-dedicado debe tener permiso de publicación en el exchange configurado; no hace falta que declare
-colas ni bindings. Docker Compose pasa estas variables separadamente al catálogo; las credenciales
-se deben suministrar mediante el entorno/gestor de secretos y no en el archivo versionado
+`solicitudes-service` consume `solicitudes.catalogo.queue` dentro del vhost `mesatech`. Puede
+configurarse con `RABBITMQ_VHOST` y `RABBITMQ_QUEUE` (predeterminados a `mesatech` y
+`solicitudes.catalogo.queue`); usa las credenciales de entorno `SOLICITUDES_RABBITMQ_USER` y
+`SOLICITUDES_RABBITMQ_PASSWORD` en Docker Compose. Su usuario dedicado `solicitudes_consumidor`
+solo necesita permisos de lectura en la cola y no declara el exchange, la cola ni el binding.
+El guardado es idempotente por `eventId`, y el mensaje se confirma después de persistir la categoría.
+Las credenciales se suministran mediante el entorno/gestor de secretos y no se guardan en
 `.env.example`.
+
+Las variables `SOLICITUD_RABBITMQ_*` configuran la conexión productora opcional de Catálogo para
+otros eventos de solicitud; no conectan `SolicitudCreadaEvent` a la cola de categorías.
 
 El guardado en la base de datos y la publicación no son atómicos: si RabbitMQ rechaza o no confirma
 el mensaje, el error queda registrado y se propaga, pero el registro ya guardado permanece. No se

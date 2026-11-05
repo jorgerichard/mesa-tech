@@ -6,5 +6,4 @@ import cl.duoc.mesatech.solicitudes.model.Solicitud;
 
 public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
     List<Solicitud> findBySolicitanteIdOrderByFechaCreacionDesc(String solicitanteId);
-    boolean existsByEventId(String eventId);
 }
