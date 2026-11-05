@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/internal/v1/solicitudes")
+@ConditionalOnProperty(prefix = "app.rabbitmq.legacy-solicitud", name = "enabled", havingValue = "true")
 public class SolicitudPublicacionController {
     private final SolicitudPublisher publisher;
 

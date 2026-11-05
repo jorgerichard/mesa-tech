@@ -19,12 +19,33 @@ MVP de gestión de solicitudes de soporte con autenticación Microsoft Entra ID,
 
 | Elemento | Valor |
 | --- | --- |
-| Exchange | `mesatech.exchange` |
+| Exchange para eventos de categoría | `catalogo.exchange` |
 | Tipo | `direct` |
-| Cola | `solicitudes.queue` |
-| Routing key | `solicitud.creada` |
+| Cola para eventos de categoría | `solicitudes.catalogo.queue` |
+| Routing key para eventos de categoría | `categoria.creada` |
+| Virtual host | `mesatech` |
 | Puerto AMQP | `5672` |
 | Panel de administración | `15672` |
+
+`catalogo-service` publica `CategoriaCreadaEvent` únicamente al crear categorías. Usa las variables
+`RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST`,
+`RABBITMQ_EXCHANGE` y `RABBITMQ_ROUTING_KEY`. Las credenciales se configuran fuera del repositorio.
+El servicio no declara el exchange, la cola ni el binding; deben existir previamente y el usuario
+productor solo necesita permiso para publicar en `catalogo.exchange`.
+
+El flujo existente de `SolicitudCreadaEvent` continúa en el código, pero queda desactivado por
+defecto. Para habilitarlo, configurar `SOLICITUD_RABBITMQ_ENABLED=true` y una conexión propia:
+`SOLICITUD_RABBITMQ_HOST`, `SOLICITUD_RABBITMQ_PORT`, `SOLICITUD_RABBITMQ_USER`,
+`SOLICITUD_RABBITMQ_PASSWORD`, `SOLICITUD_RABBITMQ_VHOST`, `SOLICITUD_RABBITMQ_EXCHANGE` y
+`SOLICITUD_RABBITMQ_ROUTING_KEY`. No reutiliza la conexión de `catalogo_publicador`. El usuario
+dedicado debe tener permiso de publicación en el exchange configurado; no hace falta que declare
+colas ni bindings. Docker Compose pasa estas variables separadamente al catálogo; las credenciales
+se deben suministrar mediante el entorno/gestor de secretos y no en el archivo versionado
+`.env.example`.
+
+El guardado en la base de datos y la publicación no son atómicos: si RabbitMQ rechaza o no confirma
+el mensaje, el error queda registrado y se propaga, pero el registro ya guardado permanece. No se
+implementa ni se presume un transactional outbox o rollback distribuido.
 
 ## Puertos
 
@@ -49,10 +70,10 @@ No se almacenan secretos de Entra ID porque el frontend SPA usa Authorization Co
 
 ## Ejecución local
 
-1. Copiar `.env.example` como `.env`.
-2. Ejecutar `docker compose up --build`.
-3. Abrir `http://localhost:3000`.
-4. Abrir RabbitMQ en `http://localhost:15672`.
+1. Copiar `.env.example` como `.env` y proporcionar los secretos localmente; el ejemplo deja las contraseñas vacías.
+2. Preparar RabbitMQ con el exchange, cola, binding y usuarios/permisos requeridos antes de publicar.
+3. Ejecutar `docker compose up --build`.
+4. Abrir `http://localhost:3000` y RabbitMQ en `http://localhost:15672`.
 
 ## Despliegue AWS
 

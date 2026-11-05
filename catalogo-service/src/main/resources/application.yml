@@ -11,17 +11,10 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:mesatech}
-    password: ${RABBITMQ_PASSWORD:mesatech123}
-    publisher-confirm-type: correlated
-    publisher-returns: true
-    template:
-      mandatory: true
 app:
   rabbitmq:
-    exchange: ${RABBITMQ_EXCHANGE:mesatech.exchange}
-    queue: ${RABBITMQ_QUEUE:solicitudes.queue}
-    routing-key: ${RABBITMQ_ROUTING_KEY:solicitud.creada}
+    confirm-timeout: 10s
+    legacy-solicitud:
+      enabled: ${SOLICITUD_RABBITMQ_ENABLED:false}
+      exchange: ${SOLICITUD_RABBITMQ_EXCHANGE:mesatech.exchange}
+      routing-key: ${SOLICITUD_RABBITMQ_ROUTING_KEY:solicitud.creada}
